@@ -1,0 +1,26 @@
+name: Notify Tag Creation
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract tag info
+        id: tag_info
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "sha=$GITHUB_SHA" >> $GITHUB_OUTPUT
+          echo "repo=$GITHUB_REPOSITORY" >> $GITHUB_OUTPUT
+
+      - name: Trigger project1 workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.PROJECT1_PAT }}  # 需要创建有repo权限的PAT
+          repository: dyhhub/test-tags-list  # 替换为项目1的实际路径
+          event-type: project2_tag_created
+          client-payload: '{"tag": "${{ steps.tag_info.outputs.tag }}", "sha": "${{ steps.tag_info.outputs.sha }}", "source_repo": "${{ steps.tag_info.outputs.repo }}"}'
